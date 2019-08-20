@@ -1,0 +1,129 @@
+##Install Packages
+
+install.packages('sas7bdat')
+install.packages("haven")
+install.packages("VIM") #data imputation with VIM and mice
+install.packages("mice")
+install.packages("ggplot2")
+install.packages("gplots")
+install.packages("graphics")
+install.packages("corrplot")
+
+library(sas7bdat)
+library(haven)
+library(VIM)
+library(mice)
+library(MASS) #For Statistical Tests
+library(ggplot2)
+library("gplots")
+library("graphics")
+library(corrplot)
+
+##Set Directory
+setwd("/Users/Sohini/Documents/NHATS/NHATS_R7_Final_Release_SAS")
+
+##Load Data
+data2 <- read_sas("NHATS_Round_7_SP_File.sas7bdat")
+
+##Keeping only 37 variables
+data3 <- data.frame(data2$spid, data2$r5dgender, data2$r7d2intvrage, data2$rl5dracehisp,data2$hw7currweigh, data2$hw7howtallft,
+                    data2$hc7health, data2$hc7hosovrnht,data2$is7resptype, data2$hh7livwthspo, data2$fl7noonetalk, data2$cm7knowwell, 
+                    data2$cm7peoptrstd, data2$cm7willnghlp, data2$pa7evrgowalk, data2$pa7outfrenjy, data2$pa7vigoractv, data2$pa7voltrwork,
+                    data2$wb7ageyofeel, data2$hh7dhshldnum, data2$sn7dnumsn, data2$te7cellphone, data2$te7compoth, data2$te7computer, data2$te7emailtext,
+                    data2$te7intrntmd1, data2$te7intrntmd2, data2$te7intrntmd3, data2$te7oftnemail, data2$te7online, data2$te7othrphone, data2$te7shoponli1,
+                    data2$te7shoponli2, data2$te7shoponli3, data2$te7socialnet, data2$te7tablet, data2$w7anfinwgt56, data2$hc7depresan1, data2$hc7depresan2,
+                    data2$hc7depresan3, data2$hc7depresan4, data2$hc7aslep30mn, data2$hc7trbfalbck, data2$hc7sleepmed, data2$hc7disescn10, data2$hc7disescn9)
+
+## Replacing the -9, -8, -7 values as NULL/Missing Values
+colm_names <- c("data2.spid", "data2.r5dgender", "data2.r7d2intvrage", "data2.rl5dracehisp","data2.hw7currweigh", "data2.hw7howtallft",
+               "data2.hc7health", "data2.hc7hosovrnht","data2.is7resptype", "data2.hh7livwthspo", "data2.fl7noonetalk", "data2.cm7knowwell", 
+               "data2.cm7peoptrstd", "data2.cm7willnghlp", "data2.pa7evrgowalk", "data2.pa7outfrenjy", "data2.pa7vigoractv", "data2.pa7voltrwork",
+               "data2.wb7ageyofeel", "data2.hh7dhshldnum", "data2.sn7dnumsn", "data2.te7cellphone", "data2.te7compoth", "data2.te7computer", "data2.te7emailtext",
+               "data2.te7intrntmd1", "data2.te7intrntmd2", "data2.te7intrntmd3", "data2.te7oftnemail", "data2.te7online", "data2.te7othrphone", "data2.te7shoponli1",
+               "data2.te7shoponli2", "data2.te7shoponli3", "data2.te7socialnet", "data2.te7tablet", "data2.w7anfinwgt56", "data2.hc7depresan1", "data2.hc7depresan2",
+               "data2.hc7depresan3", "data2.hc7depresan4", "data2.hc7aslep30mn", "data2.hc7trbfalbck", "data2.hc7sleepmed", "data2.hc7disescn10", "data2.hc7disescn9")
+
+
+for(i in 1:46) {
+  for (j in 1:NROW(data3[colm_names[i]])){
+    if (data3[colm_names[i]][j,] == -1)
+    {
+      data3[colm_names[i]][j,] <- 0
+    }
+  }
+}
+
+
+for(i in 5:46) {
+  for (j in 1:NROW(data3[colm_names[i]])){
+     if (data3[colm_names[i]][j,] == -9 | data3[colm_names[i]][j,] == -8 | data3[colm_names[i]][j,] == -7)
+     {
+       data3[colm_names[i]][j,] <- NA
+     }
+  }
+}
+
+
+#Imputation - VIM
+aggr(data3,sortVars=TRUE,numbers=TRUE)
+
+# check 2 variables at a time to see if there is structure
+marginplot(data3[1:2])
+
+data3_imp <- kNN(data3,k=3)[,1:46]
+data3_imp2 <- irmi(data3)
+
+a <- aggr(data3_imp)
+summary(a)
+b <- aggr(data3_imp2)
+summary(b)
+
+#data3_imp_final <- data3_imp - data3_imp2
+
+##Write Imputed CSV file to folder
+write.csv(data3_imp, 'data3_imp_KNN_7', row.names=T)
+write.csv(data3_imp2, 'data3_imp2', row.names=T)
+#########################################################################################
+
+## Upload Imputed file 2
+data3_imp <- read.csv("data3_imp_KNN_7")
+
+
+data_phase2 <- data.frame(data3_imp$data2.spid, data3_imp$data2.r5dgender, data3_imp$data2.r7d2intvrage, data3_imp$data2.rl5dracehisp, data3_imp$data2.te7cellphone, data3_imp$data2.te7compoth, data3_imp$data2.te7computer, data3_imp$data2.te7emailtext,
+                    data3_imp$data2.te7intrntmd1, data3_imp$data2.te7intrntmd2, data3_imp$data2.te7intrntmd3, data3_imp$data2.te7oftnemail, data3_imp$data2.te7online, data3_imp$data2.te7othrphone, data3_imp$data2.te7shoponli1,
+                    data3_imp$data2.te7shoponli2, data3_imp$data2.te7shoponli3, data3_imp$data2.te7socialnet, data3_imp$data2.te7tablet,data3_imp$data2.hc7disescn10, data3_imp$data2.hc7health)
+
+
+names(data_phase2) <- c("spid", "gender", "intvrage", "racehisp", "cellphone", "compoth", "computer", "emailtext",
+                  "intrntmd1", "intrntmd2", "intrntmd3", "oftnemail", "online", "othrphone", "shoponli1",
+                  "shoponli2", "shoponli3", "socialnet", "tablet","disescn10", "health")
+
+
+###################################################################################
+write.csv(data_phase2, 'data_phase2', row.names=T)
+data_phase2 <- read.csv("data_phase2")
+
+
+#only cancer data
+data3_imp_cancer <-  data_phase2[(data_phase2$disescn10==1),]
+#######################################################################
+
+
+## Chi-Square Test
+#tbl1 = table(data3_imp_cancer$intrntmd2, data3_imp_cancer$disescn10) 
+#chisq.test(tbl1)
+
+#data3_imp_cancer <- as.data.frame.matrix(data3_imp_cancer)
+######tbl1c = table(data3_imp_cancer$socialnet, data3_imp_cancer$intvrage) 
+######chisq.test(tbl1c)
+
+tbl1 = table(data_phase2$health, data_phase2$intvrage) 
+chisq.test(tbl1)
+
+#tbl2 = table(data_phase2$tablet, data_phase2$disescn10) 
+#chisq.test(tbl2)
+
+#tbl2c = table(data3_imp_cancer$tablet, data3_imp_cancer$disescn10) 
+#chisq.test(tbl2c)
+
+
